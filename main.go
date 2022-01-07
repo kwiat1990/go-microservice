@@ -11,14 +11,12 @@ import (
 )
 
 func main() {
-	logger := log.New(os.Stdout, "go-micro-service", log.LstdFlags)
+	logger := log.New(os.Stdout, "go-microservice", log.LstdFlags)
 
-	hh := handlers.NewHello(logger)
-	gh := handlers.NewGoodbye(logger)
+	th := handlers.NewTeams(logger)
 
 	serverMux := http.NewServeMux()
-	serverMux.Handle("/", hh)
-	serverMux.Handle("/goodbye", gh)
+	serverMux.Handle("/", th)
 
 	server := &http.Server{
 		Addr:         ":8080",
@@ -31,7 +29,8 @@ func main() {
 	go func() {
 		err := server.ListenAndServe()
 		if err != nil {
-			logger.Fatal(err)
+			logger.Fatalf("Error occured while starting server: %s\n", err)
+			os.Exit(1)
 		}
 	}()
 
@@ -42,6 +41,9 @@ func main() {
 	sig := <-sigChan
 	logger.Println("Gracefully shutting down", sig)
 
-	timeCtx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	timeCtx, err := context.WithTimeout(context.Background(), 30*time.Second)
+	if err != nil {
+		logger.Fatal(err)
+	}
 	server.Shutdown(timeCtx)
 }
