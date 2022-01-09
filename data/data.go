@@ -2,6 +2,7 @@ package data
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"time"
 )
@@ -18,9 +19,11 @@ type Team struct {
 
 type Teams []*Team
 
+var ErrTeamNotFound = fmt.Errorf("Team not found")
+
 var listTeams = Teams{
 	&Team{
-		ID:        1,
+		ID:        0,
 		City:      "Detroit",
 		Name:      "Detroit Red Wings",
 		ShortName: "DET",
@@ -28,7 +31,7 @@ var listTeams = Teams{
 		UpdatedOn: time.Now().UTC().String(),
 	},
 	&Team{
-		ID:        2,
+		ID:        1,
 		City:      "Denver",
 		Name:      "Colorado Avalanche",
 		ShortName: "COL",
@@ -37,7 +40,28 @@ var listTeams = Teams{
 	},
 }
 
+func GetTeams() Teams {
+	return listTeams
+}
+
+func AddTeam(t *Team) {
+	t.ID = generateNextID()
+	listTeams = append(listTeams, t)
+}
+
+func PutTeam(id int, team *Team) error {
+	_, i, err := findTeam(id)
+	if err != nil {
+		fmt.Printf("unable to find a team with the ID %d: %s", i, err)
+	}
+	team.ID = id
+	listTeams[i] = team
+	return err
+}
+
 func (t *Team) FromJSON(r io.Reader) error {
+	// While working with io.Reader/Writer it's better to use json.NewEncoder/NewDecoder 
+	// instead of json.Marshal/Unmarshal as it's slightly more performant.
 	data := json.NewDecoder(r)
 	return data.Decode(t)
 }
@@ -47,6 +71,16 @@ func (t *Teams) ToJSON(wr io.Writer) error {
 	return data.Encode(t)
 }
 
-func GetTeams() Teams {
-	return listTeams
+func generateNextID() int {
+	t := listTeams[len(listTeams)-1]
+	return t.ID + 1
+}
+
+func findTeam(id int) (*Team, int, error) {
+	for i, v := range listTeams {
+		if v.ID == id {
+			return v, i, nil
+		}
+	}
+	return nil, -1, ErrTeamNotFound
 }
