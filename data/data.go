@@ -49,7 +49,7 @@ func AddTeam(t *Team) {
 	listTeams = append(listTeams, t)
 }
 
-func PutTeam(id int, team *Team) error {
+func UpdateTeam(id int, team *Team) error {
 	_, i, err := findTeam(id)
 	if err != nil {
 		fmt.Printf("unable to find a team with the ID %d: %s", i, err)

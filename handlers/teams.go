@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"context"
 	"go-microservice/data"
 	"log"
 	"net/http"
-	"regexp"
 	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 type Teams struct {
@@ -16,40 +18,7 @@ func NewTeams(l *log.Logger) *Teams {
 	return &Teams{l}
 }
 
-func (t *Teams) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-	if r.Method == http.MethodGet {
-		t.getTeams(rw, r)
-		return
-	}
-
-	if r.Method == http.MethodPost {
-		t.postTeam(rw, r)
-		return
-	}
-
-	if r.Method == http.MethodPut {
-		reg := regexp.MustCompile(`/([0-9]+)`)
-		result := reg.FindAllStringSubmatch(r.URL.Path, -1)
-
-		if len(result) != 1 || len(result[0]) != 2 {
-			http.Error(rw, "Invalid URL", http.StatusBadRequest)
-			return
-		}
-		id, err := strconv.Atoi(result[0][1])
-		if err != nil {
-			http.Error(rw, "Invalid URL, unable to convert ID to number", http.StatusBadRequest)
-			return
-		} 
-
-		t.putTeam(id, rw, r) 
-		return
-	}
-
-	// Catch all unsupported methods
-	rw.WriteHeader(http.StatusMethodNotAllowed)
-}
-
-func (t *Teams) getTeams(rw http.ResponseWriter, r *http.Request) {
+func (t *Teams) GetTeams(rw http.ResponseWriter, r *http.Request) {
 	t.l.Println("Handle GET Teams")
 
 	teams := data.GetTeams()
@@ -59,27 +28,27 @@ func (t *Teams) getTeams(rw http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (t *Teams) postTeam(rw http.ResponseWriter, r *http.Request) {
+func (t *Teams) PostTeam(rw http.ResponseWriter, r *http.Request) {
 	t.l.Println("Handle POST Team")
 
-	team := &data.Team{}
-	err := team.FromJSON(r.Body)
-	if err != nil {
-		http.Error(rw, "Unable to read JSON", http.StatusBadRequest)
-	}
-	data.AddTeam(team)
+	// Cast returned value to a Team type
+	team := r.Context().Value(KeyTeam{}).(data.Team)
+	data.AddTeam(&team)
 }
 
-func (t *Teams) putTeam(id int, rw http.ResponseWriter, r *http.Request ) {
-	t.l.Println("Handle PUT Team")
-
-	team := &data.Team{}
-	err := team.FromJSON(r.Body)
+func (t *Teams) PutTeam(rw http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	id, err := strconv.Atoi(params["id"])
 	if err != nil {
-		http.Error(rw, "Unable to read JSON", http.StatusBadRequest)
+		http.Error(rw, "Unable to convert ID to number", http.StatusBadRequest)
+		return
 	}
 
-	err = data.PutTeam(id, team)
+	t.l.Printf("Handle PUT Team for ID: %d", id)
+
+	// Cast returned value to a Team type
+	team := r.Context().Value(KeyTeam{}).(data.Team)
+ 	err = data.UpdateTeam(id, &team) 
 	if err == data.ErrTeamNotFound {
 		http.Error(rw, "Team not found", http.StatusNotFound)
 		return
@@ -88,5 +57,23 @@ func (t *Teams) putTeam(id int, rw http.ResponseWriter, r *http.Request ) {
 	if err != nil {
 		http.Error(rw, "Team not found", http.StatusInternalServerError)
 		return
-	} 
+	}
+}
+
+type KeyTeam struct{}
+
+func (t *Teams) MiddlewareTeamValidation(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
+		team := data.Team{}
+		err := team.FromJSON(r.Body)
+		if err != nil {
+			t.l.Println("[ERROR] deserializing JSON")
+			http.Error(rw, "Unable to read JSON", http.StatusBadRequest)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), KeyTeam{}, team)
+		req := r.WithContext(ctx)
+		next.ServeHTTP(rw, req)
+	})
 }
