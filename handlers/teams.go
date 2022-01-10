@@ -1,3 +1,17 @@
+// Package classification Teams API
+//
+// Documentation for Teams API
+//
+// Schemes: http
+// BasePath: /
+// Version: 0.1.0
+//
+// Consumes:
+// - application/json
+//
+// Produces:
+// - application/json
+// swagger:meta
 package handlers
 
 import (
@@ -6,10 +20,28 @@ import (
 	"go-microservice/data"
 	"log"
 	"net/http"
-	"strconv"
-
-	"github.com/gorilla/mux"
 )
+
+type KeyTeam struct{}
+
+// A list of teams
+// swagger:response teamsResponse
+type teamResponse struct {
+	// All teams in the system
+	// in: body
+	Body data.Teams
+}
+
+// swagger:response noContent
+type teamNoContent struct {}
+
+// swagger:parameters deleteTeam
+type teamIDParameterWrapper struct {
+	// The ID of the team to delete from the system
+	// in: path
+	// required: true
+	ID int `json:"id"` 
+} 
 
 type Teams struct {
 	l *log.Logger
@@ -18,50 +50,6 @@ type Teams struct {
 func NewTeams(l *log.Logger) *Teams {
 	return &Teams{l}
 }
-
-func (t *Teams) GetTeams(rw http.ResponseWriter, r *http.Request) {
-	t.l.Println("Handle GET Teams")
-
-	teams := data.GetTeams()
-	err := teams.ToJSON(rw)
-	if err != nil {
-		http.Error(rw, "Unable to serve JSON", http.StatusInternalServerError)
-	}
-}
-
-func (t *Teams) PostTeam(rw http.ResponseWriter, r *http.Request) {
-	t.l.Println("Handle POST Team")
-
-	// Cast returned value to a Team type
-	team := r.Context().Value(KeyTeam{}).(data.Team)
-	data.AddTeam(&team)
-}
-
-func (t *Teams) PutTeam(rw http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id, err := strconv.Atoi(params["id"])
-	if err != nil {
-		http.Error(rw, "Unable to convert ID to number", http.StatusBadRequest)
-		return
-	}
-
-	t.l.Printf("Handle PUT Team for ID: %d", id)
-
-	// Cast returned value to a Team type
-	team := r.Context().Value(KeyTeam{}).(data.Team)
-	err = data.UpdateTeam(id, &team)
-	if err == data.ErrTeamNotFound {
-		http.Error(rw, "Team not found", http.StatusNotFound)
-		return
-	}
-
-	if err != nil {
-		http.Error(rw, "Team not found", http.StatusInternalServerError)
-		return
-	}
-}
-
-type KeyTeam struct{}
 
 func (t *Teams) MiddlewareTeamValidation(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {

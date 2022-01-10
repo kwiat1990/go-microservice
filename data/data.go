@@ -9,10 +9,25 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+// Team defines a structure for an API team
+// swagger:model
 type Team struct {
-	ID        int    `json:"id"`
-	Name      string `json:"name" validate:"required"`
+	ID int `json:"id"`
+	// Name of the team
+	//
+	// required: true
+	// pattern: /[a-zA-Z]+/
+	Name string `json:"name" validate:"required"`
+	// Shorthand name of the team
+	//
+	// required: true
+	// pattern: /[A-Z]{3}/
+	// minimum length: 3
+	// maximum length: 3
 	ShortName string `json:"shortName" validate:"required,uppercase,alpha"`
+	// City of the team
+	//
+	// required: true
 	City      string `json:"city" validate:"required"`
 	CreatedOn string `json:"-"`
 	UpdatedOn string `json:"-"`
@@ -56,8 +71,19 @@ func UpdateTeam(id int, team *Team) error {
 	if err != nil {
 		fmt.Printf("unable to find a team with the ID %d: %s", i, err)
 	}
+
 	team.ID = id
 	listTeams[i] = team
+	return err
+}
+
+func DeleteTeam(id int) error {
+	_, i, err := findTeam(id)
+	if err != nil {
+		fmt.Printf("unable to find a team with the ID %d: %s", i, err)
+	}
+
+	listTeams = append(listTeams[:i], listTeams[i+1:]...)
 	return err
 }
 

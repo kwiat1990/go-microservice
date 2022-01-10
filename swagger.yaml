@@ -1,0 +1,81 @@
+basePath: /
+consumes:
+- application/json
+definitions:
+  Team:
+    description: Team defines a structure for an API team
+    properties:
+      city:
+        description: City of the team
+        type: string
+        x-go-name: City
+      id:
+        format: int64
+        type: integer
+        x-go-name: ID
+      name:
+        description: Name of the team
+        pattern: /[a-zA-Z]+/
+        type: string
+        x-go-name: Name
+      shortName:
+        description: Shorthand name of the team
+        maxLength: 3
+        minLength: 3
+        pattern: /[A-Z]{3}/
+        type: string
+        x-go-name: ShortName
+    required:
+    - name
+    - shortName
+    - city
+    type: object
+    x-go-package: go-microservice/data
+  Teams:
+    items:
+      $ref: '#/definitions/Team'
+    type: array
+    x-go-package: go-microservice/data
+info:
+  description: Documentation for Teams API
+  title: Teams API
+  version: 0.1.0
+paths:
+  /:
+    get:
+      description: Returns a list of teams
+      operationId: listTeams
+      responses:
+        "200":
+          $ref: '#/responses/teamsResponse'
+      tags:
+      - teams
+  /{id}:
+    delete:
+      description: 'Returns void '
+      operationId: deleteTeam
+      parameters:
+      - description: The ID of the team to delete from the system
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+        x-go-name: ID
+      responses:
+        "201":
+          $ref: '#/responses/noContent'
+      tags:
+      - teams
+produces:
+- application/json
+responses:
+  noContent:
+    description: ""
+  teamsResponse:
+    description: A list of teams
+    schema:
+      $ref: '#/definitions/Teams'
+schemes:
+- http
+swagger: "2.0"
