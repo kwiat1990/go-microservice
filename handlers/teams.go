@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"go-microservice/data"
 	"log"
 	"net/http"
@@ -48,7 +49,7 @@ func (t *Teams) PutTeam(rw http.ResponseWriter, r *http.Request) {
 
 	// Cast returned value to a Team type
 	team := r.Context().Value(KeyTeam{}).(data.Team)
- 	err = data.UpdateTeam(id, &team) 
+	err = data.UpdateTeam(id, &team)
 	if err == data.ErrTeamNotFound {
 		http.Error(rw, "Team not found", http.StatusNotFound)
 		return
@@ -69,6 +70,16 @@ func (t *Teams) MiddlewareTeamValidation(next http.Handler) http.Handler {
 		if err != nil {
 			t.l.Println("[ERROR] deserializing JSON")
 			http.Error(rw, "Unable to read JSON", http.StatusBadRequest)
+			return
+		}
+
+		err = team.Validate()
+		if err != nil {
+			t.l.Printf("[ERROR] validating team: %s\n", err)
+			http.Error(
+				rw,
+				fmt.Sprintf("OKO! Error validating team: %s", err),
+				http.StatusBadRequest)
 			return
 		}
 

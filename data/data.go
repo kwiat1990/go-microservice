@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"io"
 	"time"
+
+	"github.com/go-playground/validator/v10"
 )
 
 type Team struct {
 	ID        int    `json:"id"`
-	Name      string `json:"name"`
-	ShortName string `json:"shortName"`
-	City      string `json:"city"`
+	Name      string `json:"name" validate:"required"`
+	ShortName string `json:"shortName" validate:"required,uppercase,alpha"`
+	City      string `json:"city" validate:"required"`
 	CreatedOn string `json:"-"`
 	UpdatedOn string `json:"-"`
 	DeletedOn string `json:"-"`
@@ -59,8 +61,13 @@ func UpdateTeam(id int, team *Team) error {
 	return err
 }
 
+func (t *Team) Validate() error {
+	validate := validator.New()
+	return validate.Struct(t)
+}
+
 func (t *Team) FromJSON(r io.Reader) error {
-	// While working with io.Reader/Writer it's better to use json.NewEncoder/NewDecoder 
+	// While working with io.Reader/Writer it's better to use json.NewEncoder/NewDecoder
 	// instead of json.Marshal/Unmarshal as it's slightly more performant.
 	data := json.NewDecoder(r)
 	return data.Decode(t)
