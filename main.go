@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	logger := log.New(os.Stdout, "go-microservice", log.LstdFlags)
+	logger := log.New(os.Stdout, "[go-microservice] *** ", log.LstdFlags)
 
 	th := handlers.NewTeams(logger)
 
