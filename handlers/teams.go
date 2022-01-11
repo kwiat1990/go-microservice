@@ -3,7 +3,7 @@
 // Documentation for Teams API
 //
 // Schemes: http
-// BasePath: /
+// BasePath: /api
 // Version: 0.1.0
 //
 // Consumes:

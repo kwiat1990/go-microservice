@@ -11,6 +11,7 @@ import (
 	"go-microservice/handlers"
 
 	"github.com/go-openapi/runtime/middleware"
+	gorillaHandlers "github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -38,13 +39,15 @@ func main() {
 	// Serve swagger docs and load swagger spec file from disk
 	options := middleware.RedocOpts{SpecURL: "/swagger.yaml"}
 	swaggerHandler := middleware.Redoc(options, nil)
-	
+
 	getRouter.Handle("/docs", swaggerHandler)
 	getRouter.Handle("/swagger.yaml", http.FileServer(http.Dir("./")))
 
+	corsHandler := gorillaHandlers.CORS(gorillaHandlers.AllowedHeaders([]string{"localhost:3000"}))
+
 	server := &http.Server{
 		Addr:         ":8080",
-		Handler:      router,
+		Handler:      corsHandler(router),
 		ErrorLog:     logger,
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  1 * time.Second,
