@@ -3,29 +3,38 @@ package handlers
 import (
 	"go-microservice/data"
 	"net/http"
-	"strconv"
-
-	"github.com/gorilla/mux"
 )
 
-// swagger:route DELETE /{id} teams deleteTeam
-// Returns void 
+// swagger:route DELETE /teams/{id} teams deleteTeam
+// Update a teams details
+//
 // responses:
-// 	201: noContent
+//	201: noContentResponse
+//  404: errorResponse
+//  501: errorResponse
+
+// Delete handles DELETE requests and removes items from the database
 func (t *Teams) DeleteTeam(rw http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	id, _ := strconv.Atoi(params["id"])
+	rw.Header().Add("Content-Type", "application/json")
+	
+	id := getTeamID(r)
+	
+	t.l.Println("[DEBUG] deleting record id", id)
 
-	t.l.Println("Handle DELETE Team", id)
 	err := data.DeleteTeam(id)
-
 	if err == data.ErrTeamNotFound {
-		http.Error(rw, "Team not found", http.StatusNotFound)
+		t.l.Println("[ERROR] deleting team id does not exist")
+		rw.WriteHeader(http.StatusNotFound)
+		data.ToJSON(&GenericError{Message: err.Error()}, rw)
 		return
 	}
 
 	if err != nil {
-		http.Error(rw, "Team not found", http.StatusInternalServerError)
+		t.l.Println("[ERROR] deleting team", err)
+		rw.WriteHeader(http.StatusInternalServerError)
+		data.ToJSON(&GenericError{Message: err.Error()}, rw)
 		return
 	}
+
+	rw.WriteHeader(http.StatusNoContent)
 }

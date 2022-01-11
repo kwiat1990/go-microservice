@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"time"
 
+	"go-microservice/data"
 	"go-microservice/handlers"
 
 	"github.com/go-openapi/runtime/middleware"
@@ -16,21 +17,24 @@ import (
 )
 
 func main() {
-	logger := log.New(os.Stdout, "[go-microservice] *** ", log.LstdFlags)
+	newLogger := log.New(os.Stdout, "[go-microservice] *** ", log.LstdFlags)
+	newValidator := data.NewValidation()
 
-	teamsHandler := handlers.NewTeams(logger)
+	teamsHandler := handlers.NewTeams(newLogger, newValidator)
 
 	router := mux.NewRouter()
-
+	router.StrictSlash(true)
+	
 	getRouter := router.Methods(http.MethodGet).Subrouter()
 	getRouter.HandleFunc("/", teamsHandler.GetTeams)
+	getRouter.HandleFunc("/{id:[0-9]+}", teamsHandler.GetTeam)
 
 	putRouter := router.Methods(http.MethodPut).Subrouter()
-	putRouter.HandleFunc("/{id:[0-9]+}", teamsHandler.PutTeam)
+	putRouter.HandleFunc("/{id:[0-9]+}", teamsHandler.UpdateTeam)
 	putRouter.Use(teamsHandler.MiddlewareTeamValidation)
 
 	postRouter := router.Methods(http.MethodPost).Subrouter()
-	postRouter.HandleFunc("/", teamsHandler.PostTeam)
+	postRouter.HandleFunc("/", teamsHandler.CreateTeam)
 	postRouter.Use(teamsHandler.MiddlewareTeamValidation)
 
 	deleteRouter := router.Methods(http.MethodDelete).Subrouter()
@@ -48,17 +52,17 @@ func main() {
 	server := &http.Server{
 		Addr:         ":8080",
 		Handler:      corsHandler(router),
-		ErrorLog:     logger,
+		ErrorLog:     newLogger,
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,
 	}
 
 	go func() {
-		logger.Println("Starting server on port 8080")
+		newLogger.Println("Starting server on port 8080")
 		err := server.ListenAndServe()
 		if err != nil {
-			logger.Fatalf("Error occured while starting server: %s\n", err)
+			newLogger.Fatalf("Error occured while starting server: %s\n", err)
 			os.Exit(1)
 		}
 	}()
@@ -68,11 +72,11 @@ func main() {
 	signal.Notify(sigChan, os.Kill)
 
 	sig := <-sigChan
-	logger.Println("Gracefully shutting down", sig)
+	newLogger.Println("Gracefully shutting down", sig)
 
 	timeCtx, err := context.WithTimeout(context.Background(), 30*time.Second)
 	if err != nil {
-		logger.Fatal(err)
+		newLogger.Fatal(err)
 	}
 	server.Shutdown(timeCtx)
 }

@@ -1,78 +1,50 @@
-// Package classification Teams API
-//
-// Documentation for Teams API
-//
-// Schemes: http
-// BasePath: /api
-// Version: 0.1.0
-//
-// Consumes:
-// - application/json
-//
-// Produces:
-// - application/json
-// swagger:meta
 package handlers
 
 import (
-	"context"
 	"fmt"
 	"go-microservice/data"
 	"log"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 type KeyTeam struct{}
 
-// A list of teams
-// swagger:response teamsResponse
-type teamResponse struct {
-	// All teams in the system
-	// in: body
-	Body data.Teams
-}
-
-// swagger:response noContent
-type teamNoContent struct {}
-
-// swagger:parameters deleteTeam
-type teamIDParameterWrapper struct {
-	// The ID of the team to delete from the system
-	// in: path
-	// required: true
-	ID int `json:"id"` 
-} 
-
 type Teams struct {
 	l *log.Logger
+	v *data.Validation
 }
 
-func NewTeams(l *log.Logger) *Teams {
-	return &Teams{l}
+// GenericError is a generic error message returned by a server
+type GenericError struct {
+	Message string `json:"message"`
 }
 
-func (t *Teams) MiddlewareTeamValidation(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-		team := data.Team{}
-		err := team.FromJSON(r.Body)
-		if err != nil {
-			t.l.Println("[ERROR] deserializing JSON")
-			http.Error(rw, "Unable to read JSON", http.StatusBadRequest)
-			return
-		}
+// ValidationError is a collection of validation error messages
+type ValidationError struct {
+	Messages []string `json:"messages"`
+}
 
-		err = team.Validate()
-		if err != nil {
-			t.l.Printf("[ERROR] validating team: %s\n", err)
-			http.Error(
-				rw,
-				fmt.Sprintf("OKO! Error validating team: %s", err),
-				http.StatusBadRequest)
-			return
-		}
+// ErrInvalidTeamPath is an error message when the team path is not valid
+var ErrInvalidTeamPath = fmt.Errorf("invalid Path, path should be /teams/[id]")
 
-		ctx := context.WithValue(r.Context(), KeyTeam{}, team)
-		req := r.WithContext(ctx)
-		next.ServeHTTP(rw, req)
-	})
+func NewTeams(l *log.Logger, v *data.Validation) *Teams {
+	return &Teams{l, v}
+}
+
+// getTeamID returns the team ID from the URL
+// Panics if cannot convert the ID into an integer
+// this should never happen as the router ensures that
+// this is a valid number
+func getTeamID(r *http.Request) int {
+	vars := mux.Vars(r)
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		// Should never happen
+		panic(err)
+	}
+
+	return id
 }
