@@ -20,7 +20,7 @@ func (t *Teams) MiddlewareTeamValidation(next http.Handler) http.Handler {
 		}
 
 		errs := t.v.Validate(team)
-		if errs != nil {
+		if len(errs) != 0 {
 			t.l.Println("[ERROR] validating team", errs)
 			// Return the validation messages as an array
 			rw.WriteHeader(http.StatusUnprocessableEntity)

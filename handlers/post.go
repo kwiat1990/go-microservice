@@ -16,7 +16,7 @@ import (
 // Create handles POST requests to add new team
 func (t *Teams) CreateTeam(rw http.ResponseWriter, r *http.Request) {
 	// Fetch the team from the context
-	team := r.Context().Value(KeyTeam{}).(data.Team)
+	team := r.Context().Value(KeyTeam{}).(*data.Team)
 	t.l.Printf("[DEBUG] Inserting team: %#v\n", team)
-	data.AddTeam(team)
+	data.AddTeam(*team)
 }

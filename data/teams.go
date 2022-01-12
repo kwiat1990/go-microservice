@@ -59,7 +59,7 @@ func GetTeams() Teams {
 
 func GetTeamByID(id int) (*Team, error) {
 	i := findIndexByID(id)
-	if id == -1 {
+	if i == -1 {
 		return nil, ErrTeamNotFound
 	}
 
@@ -88,7 +88,7 @@ func DeleteTeam(id int) error {
 		return ErrTeamNotFound
 	}
 
-	listTeams = append(listTeams[:i], listTeams[i+1])
+	listTeams = append(listTeams[:i], listTeams[i+1:]...)
 
 	return nil
 }

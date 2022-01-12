@@ -17,11 +17,12 @@ import (
 func (t *Teams) UpdateTeam(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Add("Content-Type", "application/json")
 
-	// Fetch the team from the context
-	prod := r.Context().Value(KeyTeam{}).(data.Team)
-	t.l.Println("[DEBUG] updating team id", prod.ID)
+	// Fetch the team from the context and assign the real ID of the team
+	team := r.Context().Value(KeyTeam{}).(*data.Team)
+	team.ID = getTeamID(r)
+	t.l.Println("[DEBUG] updating team id", team.ID)
 
-	err := data.UpdateTeam(prod)
+	err := data.UpdateTeam(*team)
 	if err == data.ErrTeamNotFound {
 		t.l.Println("[ERROR] team not found", err)
 		rw.WriteHeader(http.StatusNotFound)

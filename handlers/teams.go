@@ -28,7 +28,7 @@ type ValidationError struct {
 }
 
 // ErrInvalidTeamPath is an error message when the team path is not valid
-var ErrInvalidTeamPath = fmt.Errorf("invalid Path, path should be /teams/[id]")
+var ErrInvalidTeamPath = fmt.Errorf("invalid Path, path should be /api/[id]")
 
 func NewTeams(l *log.Logger, v *data.Validation) *Teams {
 	return &Teams{l, v}
