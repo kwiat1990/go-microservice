@@ -26,7 +26,8 @@ func main() {
 	}
 
 	filesHandler := handlers.NewFiles(storage, l)
-
+	middleware := handlers.GzipHandler{}
+ 
 	router := mux.NewRouter()
 
 	getRouter := router.Methods(http.MethodGet).Subrouter()
@@ -34,7 +35,8 @@ func main() {
 		"/images/{id:[0-9]+}/{filename:[a-zA-Z]+\\.[a-z]{3}}",
 		http.StripPrefix("/images/", http.FileServer(http.Dir(basePath))),
 	)
-
+	getRouter.Use(middleware.GzipMiddleware)
+	
 	postRouter := router.Methods(http.MethodPost).Subrouter()
 	postRouter.HandleFunc("/images/{id:[0-9]+}/{filename:[a-zA-Z]+\\.[a-z]{3}}", filesHandler.ServeHTTP)
 
