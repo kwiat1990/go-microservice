@@ -46,7 +46,7 @@ func main() {
 	router.Handle("/docs", swaggerHandler)
 	router.Handle("/swagger.yaml", http.FileServer(http.Dir("./")))
 
-	corsHandler := gorillaHandlers.CORS(gorillaHandlers.AllowedHeaders([]string{"localhost:3000"}))
+	corsHandler := gorillaHandlers.CORS(gorillaHandlers.AllowedHeaders([]string{"*"}))
 
 	server := &http.Server{
 		Addr:         ":8080",
