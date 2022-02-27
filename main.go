@@ -48,10 +48,10 @@ func main() {
 
 	corsHandler := gorillaHandlers.CORS(gorillaHandlers.AllowedHeaders([]string{"*"}))
         
-        serverPort := os.Getenv("PORT")
-        if len(port) == 0 {
-	    port = "8080"
-        }
+    serverPort := os.Getenv("PORT")
+    if len(serverPort) == 0 {
+	serverPort = "8080"
+    }
 
 	server := &http.Server{
 		Addr:         ":" + serverPort,
