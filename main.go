@@ -50,7 +50,7 @@ func main() {
         
     serverPort := os.Getenv("PORT")
     if len(serverPort) == 0 {
-	serverPort = "8080"
+	    serverPort = "8080"
     }
 
 	server := &http.Server{
@@ -63,7 +63,7 @@ func main() {
 	}
 
 	go func() {
-		logger.Println("Starting server on port 8080")
+		logger.Printf("Starting server on port %d\n", serverPort)
 		err := server.ListenAndServe()
 		if err != nil {
 			logger.Fatalf("Error occured while starting server: %s\n", err)
