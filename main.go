@@ -47,9 +47,14 @@ func main() {
 	router.Handle("/swagger.yaml", http.FileServer(http.Dir("./")))
 
 	corsHandler := gorillaHandlers.CORS(gorillaHandlers.AllowedHeaders([]string{"*"}))
+        
+        serverPort := os.Getenv("PORT")
+        if len(port) == 0 {
+	    port = "8080"
+        }
 
 	server := &http.Server{
-		Addr:         ":8080",
+		Addr:         ":" + serverPort,
 		Handler:      corsHandler(router),
 		ErrorLog:     logger,
 		IdleTimeout:  120 * time.Second,
