@@ -53,8 +53,8 @@ func main() {
 		Handler:      corsHandler(router),
 		ErrorLog:     logger,
 		IdleTimeout:  120 * time.Second,
-		ReadTimeout:  1 * time.Second,
-		WriteTimeout: 1 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 
 	go func() {
